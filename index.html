@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibration Measurement System</title>
+    <link rel="stylesheet" href="main.css">
+    
+    <!-- Include Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Include MQTT.js CDN -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Vibration Measurement System</h1>
+        </header>
+        <main>
+            <!-- Form Section -->
+            <section class="form-section">
+                <h2>Send Measurement Request</h2>
+                <form id="measurementForm">
+                    <div class="input-group">
+                        <label for="measurementType">Measurement Type:</label>
+                        <select id="measurementType" name="measurementType">
+                            <option value="acceleration">Acceleration</option>
+                        </select>
+                    </div>
+                    <button type="submit">Send Request</button>
+                </form>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section">
+                <h2>Measurement Results</h2>
+                <div id="resultsDisplay">
+                    <!-- Measurement results will be displayed here -->
+                </div>
+            </section>
+            
+            <!-- Frequency Graph Section -->
+            <section class="graph-section">
+                <h2>Frequency Graph</h2>
+                <canvas id="frequencyGraph"></canvas>
+            </section>
+
+            <!-- Amplitude Graph Section -->
+            <section class="graph-section">
+                <h2>Amplitude Graph</h2>
+                <canvas id="amplitudeGraph"></canvas>
+            </section>
+
+            <!-- Measurement History Section -->
+            <section class="history-section">
+                <h2>Measurement History</h2>
+                <div id="historyDisplay">
+                    <!-- Measurement history will be displayed here -->
+                </div>
+            </section>
+        </main>
+        <footer>
+            <p>&copy; iPAC Vibration Measurement System. All rights reserved.</p>
+        </footer>
+    </div>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script>
+        $(document).ready(function() {
+        const client = mqtt.connect('ws://localhost:8083/mqtt');  
+
+       
+        client.on('connect', function () {
+            console.log('Connected');
+            client.subscribe('csv/data');  
+        });
+
+        
+        client.on('message', function (topic, message) {
+            if (topic === 'csv/data') {
+                const csvData = message.toString(); 
+                console.log('Received CSV data',csvData);
+                displayCSVData(csvData);  
+            }
+        });
+
+       
+        function displayCSVData(csvData) {
+            const lines = csvData.split('\n');
+            let html = '<table border="1"><thead><tr>';
+            
+            
+            const headers = lines[0].split(',');
+            headers.forEach(header => {
+                html += `<th>${header}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue; 
+                const cols = lines[i].split(',');
+                html += '<tr>';
+                cols.forEach(col => {
+                    html += `<td>${col}</td>`;
+                });
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+            
+          
+            document.getElementById('resultsDisplay').innerHTML = html;
+        }
+    });
+    </script>
+
+    <!-- <script src="/js/connect.js"></script> -->
+
+</body>
+</html>
